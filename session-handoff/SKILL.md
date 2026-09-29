@@ -1,79 +1,79 @@
 ---
 name: session-handoff
-description: Use when the user says "session handoff", "wrap up session", "hand off", "handoff summary", or wants a structured end-of-session summary before clearing context. Produces a chat-only handoff covering decisions, shipped changes, key files, running state, verification steps, deferrals, and open questions so a fresh agent can continue seamlessly.
+description: Usar cuando el usuario diga "traspaso de sesión", "cierra la sesión", "resume antes de limpiar", "session handoff", "wrap up session", "hand off" o "handoff summary", o quiera un resumen estructurado de fin de sesión antes de limpiar el contexto. Produce un traspaso solo en el chat con decisiones, cambios entregados, ficheros clave, estado en marcha, pasos de verificación, aplazamientos y preguntas abiertas, para que un agente nuevo continúe sin perder el hilo.
 ---
 
-# Session Handoff
+# Traspaso de sesión
 
-Produce a repeatable end-of-session summary so the user can `/clear` and start a fresh agent without losing continuity. The next agent should be able to pick up by reading this summary alone.
+Produce un resumen de fin de sesión repetible para que el usuario pueda hacer `/clear` y arrancar un agente nuevo sin perder continuidad. El siguiente agente tiene que poder retomar el trabajo leyendo solo este resumen.
 
-This is a **context-handoff artifact**, not a status report. The audience is a future instance of you, not a stakeholder.
+Es un **artefacto de traspaso de contexto**, no un informe de estado. El destinatario es una instancia futura de ti, no una persona interesada en el proyecto.
 
-## When to invoke
+## Cuándo invocarla
 
-User says: "session handoff", "wrap up session", "hand off", "handoff summary", "let's wrap up", "summarize before I clear", or any near-equivalent. Also invoke proactively if the user says they're about to `/clear` without having run it yet.
+El usuario dice: "traspaso de sesión", "cierra la sesión", "vamos cerrando", "resume antes de limpiar", "session handoff", "wrap up session", "hand off", "handoff summary" o algo equivalente. Invócala también por iniciativa propia si el usuario dice que va a hacer `/clear` y todavía no la ha ejecutado.
 
-## How to produce the summary
+## Cómo producir el resumen
 
-1. **Review the full conversation**, not just the last few turns. Handoffs miss things when they only summarize recent context.
-2. **Pull state from these sources (in order):**
-   - Plan files referenced this session (check `~/.claude/plans/` if a plan was mentioned).
-   - TodoWrite state — any in-progress or pending tasks.
-   - Background processes you started with `run_in_background` — shell IDs are load-bearing for the next agent.
-   - Files created or modified this session — you know what you touched; don't grep to re-discover.
-   - Memory files written or updated (`~/.claude/projects/<project>/memory/`).
-   - Unresolved questions — things you asked the user that never got a clear answer, or things the user asked that got deflected.
-3. **Do NOT audit the filesystem.** This is synthesis of what happened in THIS session. No `git log`, no broad `Glob` sweeps. If you didn't touch it this session, it doesn't belong here.
-4. **Produce the output in chat.** Do not write a file. Do not update memory. Chat-only.
+1. **Repasa la conversación entera**, no solo los últimos turnos. Los traspasos pierden cosas cuando solo resumen el contexto reciente.
+2. **Saca el estado de estas fuentes (en este orden):**
+   - Ficheros de plan citados en la sesión (mira `~/.claude/plans/` si se mencionó un plan).
+   - Estado de TodoWrite: tareas en curso o pendientes.
+   - Procesos en segundo plano que lanzaste con `run_in_background`: sus IDs de shell son imprescindibles para el siguiente agente.
+   - Ficheros creados o modificados en esta sesión: sabes lo que tocaste; no hagas grep para redescubrirlo.
+   - Ficheros de memoria escritos o actualizados (`~/.claude/projects/<proyecto>/memory/`).
+   - Preguntas sin resolver: lo que preguntaste al usuario y nunca tuvo respuesta clara, o lo que el usuario preguntó y quedó sin contestar.
+3. **NO audites el sistema de ficheros.** Es una síntesis de lo que pasó en ESTA sesión. Nada de `git log` ni barridos amplios con `Glob`. Si no lo tocaste en esta sesión, no va aquí.
+4. **Escribe el resultado en el chat.** No escribas ningún fichero. No actualices la memoria. Solo chat.
 
-## Output template — use exactly this structure, every time
+## Plantilla de salida: usa exactamente esta estructura, siempre
 
 ```
-# Session Handoff — <one-line title of what this session was about>
+# Traspaso de sesión — <título de una línea sobre de qué iba esta sesión>
 
-## Where it started
-<2-3 sentences: what the user asked for, key framing or constraints that emerged>
+## Punto de partida
+<2-3 frases: qué pidió el usuario y qué encuadre o restricciones clave surgieron>
 
-## Decisions locked + what shipped
-- <decision or change> — <why, and where it lives (absolute path if a file)>
+## Decisiones cerradas y lo entregado
+- <decisión o cambio> — <por qué, y dónde vive (ruta absoluta si es un fichero)>
 - ...
 
-## Key files for next session
-- `<absolute path>` — <why the next agent should read this first>
-- Plan file: `<path>` (if a plan drove the session)
-- Memory files touched: `<paths>` (if any)
+## Ficheros clave para la siguiente sesión
+- `<ruta absoluta>` — <por qué debe leerlo primero el siguiente agente>
+- Fichero de plan: `<ruta>` (si un plan guio la sesión)
+- Ficheros de memoria tocados: `<rutas>` (si los hay)
 
-## Running state
-- Background processes: <shell IDs + what they are + how to kill> — or "none"
-- Dev servers / ports: <url + port> — or "none"
-- Open worktrees / branches: <paths> — or "none"
+## Estado en marcha
+- Procesos en segundo plano: <IDs de shell + qué son + cómo pararlos> — o "ninguno"
+- Servidores de desarrollo / puertos: <url + puerto> — o "ninguno"
+- Worktrees / ramas abiertas: <rutas> — o "ninguno"
 
-## Verification — how to confirm things still work
-- `<command>` — <expected outcome>
+## Verificación: cómo comprobar que todo sigue funcionando
+- `<comando>` — <resultado esperado>
 - ...
 
-## Deferred + open questions
-- Deferred: <item> — <why pushed to later>
-- Open: <question needing the user's input> — <context>
+## Aplazado y preguntas abiertas
+- Aplazado: <asunto> — <por qué se dejó para después>
+- Abierta: <pregunta que necesita respuesta del usuario> — <contexto>
 
-## Pick up here
-<1-2 sentences: the single most likely next action for a fresh agent>
+## Retomar aquí
+<1-2 frases: la siguiente acción más probable para un agente nuevo>
 ```
 
-## Hard rules
+## Reglas estrictas
 
-1. **Chat output only.** Never write the handoff to a file. Never update memory from this skill.
-2. **Never invent state.** If a section has nothing to report, write "none" — do not omit the section. Structure stability is the whole point.
-3. **Absolute paths always.** The next agent may have a different working directory.
-4. **If a plan file drove the session, name it first** in "Key files" so the next agent reads it before anything else.
-5. **No emojis, no hype, no "great job" summaries.** Terse and concrete — paths, commands, shell IDs, decisions. Match the tone of a seasoned engineer handing off at end-of-shift.
-6. **Background process IDs are critical.** If you started any `run_in_background` shells, their IDs must appear in "Running state" with the kill command — the next agent cannot find them otherwise.
+1. **Solo salida en el chat.** Nunca escribas el traspaso en un fichero. Nunca actualices la memoria desde esta skill.
+2. **Nunca inventes estado.** Si una sección no tiene nada que contar, escribe "ninguno": no la omitas. La estabilidad de la estructura es lo que da sentido a la skill.
+3. **Rutas absolutas siempre.** El siguiente agente puede tener otro directorio de trabajo.
+4. **Si un plan guio la sesión, nómbralo el primero** en "Ficheros clave", para que el siguiente agente lo lea antes que nada.
+5. **Sin emojis, sin bombo, sin resúmenes de "buen trabajo".** Seco y concreto: rutas, comandos, IDs de shell, decisiones. El tono de un ingeniero con experiencia que entrega el turno.
+6. **Los IDs de procesos en segundo plano son críticos.** Si lanzaste shells con `run_in_background`, sus IDs tienen que aparecer en "Estado en marcha" con el comando para pararlos: el siguiente agente no tiene otra forma de encontrarlos.
 
-## Anti-patterns — do not do these
+## Antipatrones: no hagas esto
 
-- Summarizing the last 3 turns and calling it a handoff.
-- Listing files by relative path.
-- Skipping the "Running state" section because "nothing is running" — write "none" instead.
-- Writing the summary to `~/.claude/handoffs/` or any file. This is chat-only by design.
-- Adding a "what went well / what went poorly" retrospective. This isn't a retro.
-- Recommending next steps beyond the single "Pick up here" line. The next agent decides; you just hand off.
+- Resumir los últimos 3 turnos y llamarlo traspaso.
+- Listar ficheros con rutas relativas.
+- Saltarte "Estado en marcha" porque "no hay nada en marcha": escribe "ninguno".
+- Escribir el resumen en `~/.claude/handoffs/` o en cualquier fichero. Es solo chat, a propósito.
+- Añadir una retrospectiva de "qué fue bien / qué fue mal". Esto no es una retro.
+- Recomendar pasos más allá de la línea única de "Retomar aquí". El siguiente agente decide; tú solo entregas el turno.
